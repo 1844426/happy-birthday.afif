@@ -48,7 +48,7 @@
             font-family: inherit;
         }
 
-        /* STOP MUSIC BUTTON STYLE */
+        /* STOP MUSIC BUTTON STYLE: Top Right */
         #control-btn {
             position: absolute;
             top: 20px;
@@ -69,6 +69,22 @@
         }
         #control-btn:active {
             transform: scale(0.95);
+        }
+
+        /* BY: AAYAN CREATOR CREDIT STYLE: Top Left */
+        #creator-credit {
+            position: absolute;
+            top: 25px;
+            left: 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ff4081;
+            z-index: 25;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        .dark-mode #creator-credit {
+            color: #ffeb00;
         }
 
         /* Fixed Stage Layout */
@@ -314,6 +330,8 @@
         <button id="main-click-btn" class="click-btn" onclick="openPresent()">Click Me!</button>
     </div>
 
+    <div id="creator-credit">By: Aayan</div>
+
     <button id="control-btn" onclick="stopAndResetParty()">🛑 Stop Music</button>
 
     <div id="curtain-left" class="curtain"></div>
@@ -379,6 +397,7 @@
         const giftScreen = document.getElementById('gift-screen');
         const balloonZone = document.getElementById('balloon-zone');
         const controlBtn = document.getElementById('control-btn');
+        const creatorCredit = document.getElementById('creator-credit');
 
         const lyrics = [
             { time: 0.0,  text: "🎶 Music Starting... 🎶", sub: "Happy 5th Birthday!" },
@@ -453,25 +472,24 @@
                 stage.style.display = 'flex';
                 stage.style.opacity = '1';
                 
+                // Show control buttons securely on screen
                 controlBtn.style.opacity = '1';
                 controlBtn.style.pointerEvents = 'auto';
+                creatorCredit.style.opacity = '1';
                 
                 startSilentBuildup();
             }, 500);
         }
 
-        /* The quiet setup right before music drops */
         function startSilentBuildup() {
             track.pause();
             track.currentTime = 0;
             isMutedPeriod = true;
 
-            // Reset text back to original silent buildup message
             greetingText.innerText = "Happy Birthday Afif!";
             subtitleText.innerText = "Happy 5th Birthday!";
             subtitleText.style.display = "block";
             
-            // Clean visual state for the intro buildup
             document.body.style.backgroundColor = '#e0f7fa';
             document.body.classList.remove('dark-mode');
             document.getElementById('cake-container').classList.remove('show');
@@ -529,22 +547,20 @@
             }
         });
 
-        /* CORRECTED FOREVER LOOP ENGINE: Loops completely back to the silent intro part! */
+        /* INFINITE LOOP ENGINE */
         track.onended = () => {
             if (giftScreenActive) return;
 
-            // Clear timers and slide positions
             clearTimeout(slideshowTimeout1);
             clearTimeout(slideshowTimeout2);
             clearTimeout(prePlayTimeout);
             slideshowStarted = false;
             currentImgIndex = 0;
             
-            // Loop right back to the silent 3-second build intro stage
             startSilentBuildup();
         };
 
-        /* STOP MUSIC BUTTON: Completely shuts down everything and returns to Click Me button */
+        /* STOP MUSIC BUTTON */
         function stopAndResetParty() {
             giftScreenActive = true;
             
@@ -552,8 +568,10 @@
             track.currentTime = 0;
             isMutedPeriod = true;
             
+            // Hide corner controls
             controlBtn.style.opacity = '0';
             controlBtn.style.pointerEvents = 'none';
+            creatorCredit.style.opacity = '0';
             
             clearInterval(balloonInterval);
             balloonInterval = null;
