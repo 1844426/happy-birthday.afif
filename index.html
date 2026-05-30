@@ -48,17 +48,27 @@
             font-family: inherit;
         }
 
-        /* Creator Credit Text Style */
-        #creator-credit {
+        /* STOP MUSIC BUTTON STYLE */
+        #control-btn {
             position: absolute;
             top: 20px;
-            left: 20px;
-            font-size: 1.2rem;
+            right: 20px;
+            font-size: 1.1rem;
             font-weight: bold;
-            color: #ff1744;
-            z-index: 7;
+            color: white;
+            background-color: #ff1744;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 23, 68, 0.3);
+            z-index: 25; 
             opacity: 0;
-            transition: opacity 1s ease;
+            pointer-events: none;
+            transition: opacity 1s ease, transform 0.2s ease;
+        }
+        #control-btn:active {
+            transform: scale(0.95);
         }
 
         /* Fixed Stage Layout */
@@ -71,7 +81,7 @@
             padding: 2vh 20px;
             position: relative;
             z-index: 1;
-            transition: opacity 2s ease;
+            transition: opacity 1s ease;
         }
 
         /* Top-Anchored Text Box */
@@ -98,7 +108,7 @@
             margin: 0;
             line-height: 1.2;
         }
-        .dark-mode h1 {
+        .dark-mode #greeting-text {
             color: #d500f9;
         }
 
@@ -304,7 +314,7 @@
         <button id="main-click-btn" class="click-btn" onclick="openPresent()">Click Me!</button>
     </div>
 
-    <div id="creator-credit">By: Aayan</div>
+    <button id="control-btn" onclick="stopAndResetParty()">🛑 Stop Music</button>
 
     <div id="curtain-left" class="curtain"></div>
     <div id="curtain-right" class="curtain"></div>
@@ -356,6 +366,7 @@
     <script>
         const colors = ['#ff1744', '#00e676', '#2979ff', '#ffea00', '#d500f9', '#ff9100'];
         let balloonInterval;
+        let slideshowTimeout1, slideshowTimeout2, prePlayTimeout; 
         let isMutedPeriod = true; 
         let slideshowStarted = false; 
         let currentImgIndex = 0;
@@ -367,6 +378,7 @@
         const stage = document.getElementById('stage');
         const giftScreen = document.getElementById('gift-screen');
         const balloonZone = document.getElementById('balloon-zone');
+        const controlBtn = document.getElementById('control-btn');
 
         const lyrics = [
             { time: 0.0,  text: "🎶 Music Starting... 🎶", sub: "Happy 5th Birthday!" },
@@ -382,7 +394,6 @@
             { time: 56.5, text: "✨ Happy 5th Birthday, Afif! ✨", sub: "" }
         ];
 
-        // Listen for the Enter key to launch the present screen
         window.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' && giftScreenActive) {
                 openPresent();
@@ -403,24 +414,26 @@
             const frame = document.getElementById('photo-frame');
             const images = frame.getElementsByTagName('img');
             
+            if (giftScreenActive) return;
+
             if (!slideshowStarted) {
                 slideshowStarted = true;
                 frame.classList.add('visible');
             }
 
+            for(let img of images) { img.classList.remove('active'); }
+
             images[currentImgIndex].classList.add('active');
 
-            setTimeout(() => {
-                
+            slideshowTimeout1 = setTimeout(() => {
                 if (currentImgIndex === images.length - 1) {
                     return; 
                 }
 
                 images[currentImgIndex].classList.remove('active');
 
-                setTimeout(() => {
+                slideshowTimeout2 = setTimeout(() => {
                     currentImgIndex++;
-                    
                     if (!track.paused && !track.ended) {
                         runSequentialSlideshow();
                     }
@@ -430,46 +443,68 @@
         }
 
         function openPresent() {
-            giftScreenActive = false; // Disable keyboard shortcut once clicked
+            giftScreenActive = false; 
             warmup.play().then(() => { warmup.pause(); }).catch(e => console.log(e));
 
-            track.pause();
-            track.currentTime = 0;
-            isMutedPeriod = true;
-
             giftScreen.style.opacity = '0';
-            document.getElementById('creator-credit').style.opacity = '1';
 
             setTimeout(() => {
                 giftScreen.style.display = 'none';
                 stage.style.display = 'flex';
+                stage.style.opacity = '1';
                 
-                greetingText.innerText = "Happy Birthday Afif!";
-                subtitleText.innerText = "Happy 5th Birthday!";
-                balloonInterval = setInterval(createBalloon, 250); 
+                controlBtn.style.opacity = '1';
+                controlBtn.style.pointerEvents = 'auto';
                 
-                setTimeout(() => {
-                    isMutedPeriod = false; 
-                    
-                    document.body.style.backgroundColor = '#1a1a2e'; 
-                    document.body.classList.add('dark-mode');
-                    document.getElementById('cake-container').classList.add('show'); 
-                    
-                    greetingText.innerText = "🎶 Music Starting... 🎶";
-                    
-                    track.volume = 1.0;
-                    track.play().catch(error => {
-                        greetingText.innerText = "Tap screen to hear music! 🎵";
-                        document.body.addEventListener('click', () => { track.play(); }, { once: true });
-                    });
-                }, 3000); 
-                
+                startSilentBuildup();
             }, 500);
+        }
+
+        /* The quiet setup right before music drops */
+        function startSilentBuildup() {
+            track.pause();
+            track.currentTime = 0;
+            isMutedPeriod = true;
+
+            // Reset text back to original silent buildup message
+            greetingText.innerText = "Happy Birthday Afif!";
+            subtitleText.innerText = "Happy 5th Birthday!";
+            subtitleText.style.display = "block";
+            
+            // Clean visual state for the intro buildup
+            document.body.style.backgroundColor = '#e0f7fa';
+            document.body.classList.remove('dark-mode');
+            document.getElementById('cake-container').classList.remove('show');
+            document.getElementById('photo-frame').classList.remove('visible');
+            
+            const images = document.getElementById('photo-frame').getElementsByTagName('img');
+            for(let img of images) { img.classList.remove('active'); }
+
+            if(!balloonInterval) {
+                balloonInterval = setInterval(createBalloon, 250);
+            }
+
+            prePlayTimeout = setTimeout(() => {
+                if (giftScreenActive) return; 
+                isMutedPeriod = false; 
+                
+                document.body.style.backgroundColor = '#1a1a2e'; 
+                document.body.classList.add('dark-mode');
+                document.getElementById('cake-container').classList.add('show'); 
+                
+                greetingText.innerText = "🎶 Music Starting... 🎶";
+                
+                track.volume = 1.0;
+                track.play().catch(error => {
+                    greetingText.innerText = "Tap screen to hear music! 🎵";
+                    document.body.addEventListener('click', () => { track.play(); }, { once: true });
+                });
+            }, 3000); 
         }
 
         /* Precision Sync Engine */
         track.addEventListener('timeupdate', () => {
-            if (isMutedPeriod) return;
+            if (isMutedPeriod || giftScreenActive) return;
 
             const currentTime = track.currentTime;
             
@@ -494,20 +529,58 @@
             }
         });
 
-        /* Curtains Close Exactly 2 Seconds After Track Complete */
+        /* CORRECTED FOREVER LOOP ENGINE: Loops completely back to the silent intro part! */
         track.onended = () => {
-            setTimeout(() => {
-                clearInterval(balloonInterval); 
+            if (giftScreenActive) return;
 
-                const flames = document.querySelectorAll('.flame');
-                flames.forEach(flame => flame.style.opacity = '0');
-                
-                document.getElementById('photo-frame').classList.remove('visible'); 
-                document.getElementById('creator-credit').style.opacity = '0';
-                document.body.classList.add('curtains-closed');
-                stage.style.opacity = '0';
-            }, 2000); 
+            // Clear timers and slide positions
+            clearTimeout(slideshowTimeout1);
+            clearTimeout(slideshowTimeout2);
+            clearTimeout(prePlayTimeout);
+            slideshowStarted = false;
+            currentImgIndex = 0;
+            
+            // Loop right back to the silent 3-second build intro stage
+            startSilentBuildup();
         };
+
+        /* STOP MUSIC BUTTON: Completely shuts down everything and returns to Click Me button */
+        function stopAndResetParty() {
+            giftScreenActive = true;
+            
+            track.pause();
+            track.currentTime = 0;
+            isMutedPeriod = true;
+            
+            controlBtn.style.opacity = '0';
+            controlBtn.style.pointerEvents = 'none';
+            
+            clearInterval(balloonInterval);
+            balloonInterval = null;
+            clearTimeout(slideshowTimeout1);
+            clearTimeout(slideshowTimeout2);
+            clearTimeout(prePlayTimeout);
+            slideshowStarted = false;
+            currentImgIndex = 0;
+            
+            balloonZone.innerHTML = '';
+            
+            document.getElementById('photo-frame').classList.remove('visible');
+            const images = document.getElementById('photo-frame').getElementsByTagName('img');
+            for(let img of images) { img.classList.remove('active'); }
+            
+            document.body.style.backgroundColor = '#e0f7fa';
+            document.body.classList.remove('dark-mode');
+            document.getElementById('cake-container').classList.remove('show');
+            
+            stage.style.opacity = '0';
+            setTimeout(() => {
+                stage.style.display = 'none';
+                giftScreen.style.display = 'flex';
+                giftScreen.offsetHeight; 
+                giftScreen.style.opacity = '1';
+            }, 1000);
+        }
     </script>
 </body>
 </html>
