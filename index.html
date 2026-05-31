@@ -89,6 +89,7 @@
             text-align: center;
             border: 4px solid #ff4081;
             margin-top: 1vh;
+            display: block; /* Control visibility explicitly in JS */
         }
         .dark-mode #text-container {
             border-color: #ffeb00;
@@ -370,6 +371,7 @@
         const greetingText = document.getElementById('greeting-text');
         const subtitleText = document.getElementById('subtitle-text');
         const stage = document.getElementById('stage');
+        const textContainer = document.getElementById('text-container');
         const giftScreen = document.getElementById('gift-screen');
         const balloonZone = document.getElementById('balloon-zone');
         const creatorCredit = document.getElementById('creator-credit');
@@ -471,8 +473,9 @@
                 balloonInterval = setInterval(createBalloon, 250);
             }
 
-            // Force the stage display layout to show up safely now that curtains are open
+            // Bring layout back and reveal text container cleanly once curtains start pulling open
             stage.style.display = 'flex';
+            textContainer.style.display = 'block';
 
             prePlayTimeout = setTimeout(() => {
                 if (giftScreenActive) return; 
@@ -524,17 +527,18 @@
             }
         });
 
-        /* TV-COMPATIBLE TIMING FIX */
+        /* TIMING CONTROL MATRIX FOR ALL SCREEN TYPES */
         track.onended = () => {
             if (giftScreenActive) return;
 
             track.pause();
             track.currentTime = 0;
 
-            // Instantly hide the stage layouts entirely so the TV browser doesn't leak old content
+            // Instantly hide the stage elements AND text container so they never leak behind curtains
             stage.style.display = 'none';
+            textContainer.style.display = 'none';
 
-            // Bring the curtains completely shut
+            // Bring curtains completely shut
             document.body.classList.add('curtains-closed');
 
             clearTimeout(slideshowTimeout1);
@@ -543,17 +547,17 @@
             slideshowStarted = false;
             currentImgIndex = 0;
 
-            // 4.5 seconds to ensure slow smart TV hardware registers the solid closed break
+            // 4.5 seconds to accommodate slower wide-display scaling on laptops and smart TVs
             setTimeout(() => {
                 if (giftScreenActive) return;
                 
-                // Pull curtains open wide
+                // Pull curtains back open wide
                 document.body.classList.remove('curtains-closed');
                 
-                // Allow a tiny delay for curtains to fully clear layout calculations on TVs before staging opens
+                // Tiny delay lets browser finish rendering the curtains clearing out of view
                 setTimeout(() => {
                     startSilentBuildup();
-                }, 100);
+                }, 150);
             }, 4500); 
         };
     </script>
