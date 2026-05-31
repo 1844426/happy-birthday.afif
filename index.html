@@ -282,7 +282,6 @@
             border-radius: 15px 0 0 15px;
         }
         
-        /* Classes applied dynamically by JS to physically close them */
         body.curtains-closed #curtain-left { transform: translateX(0); }
         body.curtains-closed #curtain-right { transform: translateX(0); }
 
@@ -434,7 +433,6 @@
         function openPresent() {
             giftScreenActive = false; 
             
-            // Prime audio system immediately on human click
             warmup.play().then(() => { warmup.pause(); }).catch(e => console.log(e));
             track.volume = 0;
             track.play().then(() => {
@@ -525,30 +523,29 @@
             }
         });
 
-        /* FOREVER LOOP: Closes curtains, waits 2 seconds, opens curtains and restarts build! */
+        /* FOREVER LOOP TIMING FIXED */
         track.onended = () => {
             if (giftScreenActive) return;
 
-            // 1. Physically bring the red curtains together
+            // 1. Curtains take 2 seconds to close shut completely
             document.body.classList.add('curtains-closed');
 
-            // Clear slideshow parameters cleanly behind the scenes
             clearTimeout(slideshowTimeout1);
             clearTimeout(slideshowTimeout2);
             clearTimeout(prePlayTimeout);
             slideshowStarted = false;
             currentImgIndex = 0;
 
-            // 2. Wait exactly 2 seconds while the curtains stay completely closed
+            // 2. Set total wait to 4000ms (2s animation closing + 2s holding shut)
             setTimeout(() => {
                 if (giftScreenActive) return;
                 
-                // 3. Open the curtains back up cleanly
+                // 3. Open curtains back up
                 document.body.classList.remove('curtains-closed');
                 
-                // 4. Fire up the silent preparation stage automatically
+                // 4. Start the silent build part
                 startSilentBuildup();
-            }, 2000);
+            }, 4000); 
         };
     </script>
 </body>
