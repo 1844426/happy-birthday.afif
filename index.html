@@ -118,8 +118,8 @@
         /* Middle Slideshow Area Layout */
         .slideshow-wrapper {
             position: absolute;
-            top: 28vh; 
-            bottom: 24vh; 
+            top: 22vh; 
+            bottom: 22vh; 
             left: 0;
             right: 0;
             display: flex;
@@ -129,12 +129,12 @@
             z-index: 6;
         }
 
-        /* Dynamic, Restricted Frameless Photo Container */
+        /* Dynamic Frameless Photo Container */
         #photo-frame {
             height: 100%; 
             width: 100%;
-            max-height: 220px; 
-            max-width: 320px; 
+            max-height: 420px; 
+            max-width: 600px;  
             position: relative;
             overflow: hidden;
             opacity: 0;
@@ -435,7 +435,6 @@
             
             warmup.play().then(() => { warmup.pause(); }).catch(e => console.log(e));
             
-            // Prime browser audio cleanly on click, but force total pause instantly
             track.pause();
             track.currentTime = 0;
 
@@ -451,9 +450,7 @@
             }, 500);
         }
 
-        /* 3. STEP THREE: Complete silence buildup sequence */
         function startSilentBuildup() {
-            // Absolute hard-stop on audio and track pointer reset
             track.pause();
             track.currentTime = 0;
             isMutedPeriod = true;
@@ -474,12 +471,13 @@
                 balloonInterval = setInterval(createBalloon, 250);
             }
 
-            // Exactly 3 seconds of peaceful setup before dropping the beat
+            // Force the stage display layout to show up safely now that curtains are open
+            stage.style.display = 'flex';
+
             prePlayTimeout = setTimeout(() => {
                 if (giftScreenActive) return; 
                 isMutedPeriod = false; 
                 
-                /* 4. STEP FOUR: Kick off the actual show elements */
                 document.body.style.backgroundColor = '#1a1a2e'; 
                 document.body.classList.add('dark-mode');
                 document.getElementById('cake-container').classList.add('show'); 
@@ -526,15 +524,17 @@
             }
         });
 
-        /* FOREVER LOOP TIMING FIXED PROPERLY */
+        /* TV-COMPATIBLE TIMING FIX */
         track.onended = () => {
             if (giftScreenActive) return;
 
-            // Make sure music stops immediately when the file naturally ends
             track.pause();
             track.currentTime = 0;
 
-            // 1. STEP ONE: Physical curtains close shut completely (Takes 2 seconds)
+            // Instantly hide the stage layouts entirely so the TV browser doesn't leak old content
+            stage.style.display = 'none';
+
+            // Bring the curtains completely shut
             document.body.classList.add('curtains-closed');
 
             clearTimeout(slideshowTimeout1);
@@ -543,16 +543,18 @@
             slideshowStarted = false;
             currentImgIndex = 0;
 
-            // 4 seconds total (2s closing animation + 2s holding shut perfectly blank)
+            // 4.5 seconds to ensure slow smart TV hardware registers the solid closed break
             setTimeout(() => {
                 if (giftScreenActive) return;
                 
-                // 2. STEP TWO: Curtains swing back wide open
+                // Pull curtains open wide
                 document.body.classList.remove('curtains-closed');
                 
-                // Then immediately calls step 3 (buildup text and silent mode setup)
-                startSilentBuildup();
-            }, 4000); 
+                // Allow a tiny delay for curtains to fully clear layout calculations on TVs before staging opens
+                setTimeout(() => {
+                    startSilentBuildup();
+                }, 100);
+            }, 4500); 
         };
     </script>
 </body>
