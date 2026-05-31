@@ -48,20 +48,17 @@
             font-family: inherit;
         }
 
-        /* BY: AAYAN CREATOR CREDIT STYLE */
+        /* Creator Credit Text Style */
         #creator-credit {
             position: absolute;
-            top: 25px;
+            top: 20px;
             left: 20px;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: bold;
-            color: #ff4081;
-            z-index: 25;
+            color: #ff1744;
+            z-index: 7;
             opacity: 0;
             transition: opacity 1s ease;
-        }
-        .dark-mode #creator-credit {
-            color: #ffeb00;
         }
 
         /* Fixed Stage Layout */
@@ -74,7 +71,7 @@
             padding: 2vh 20px;
             position: relative;
             z-index: 1;
-            transition: opacity 1s ease;
+            transition: opacity 2s ease;
         }
 
         /* Top-Anchored Text Box */
@@ -89,7 +86,6 @@
             text-align: center;
             border: 4px solid #ff4081;
             margin-top: 1vh;
-            display: block;
         }
         .dark-mode #text-container {
             border-color: #ffeb00;
@@ -102,7 +98,7 @@
             margin: 0;
             line-height: 1.2;
         }
-        .dark-mode #greeting-text {
+        .dark-mode h1 {
             color: #d500f9;
         }
 
@@ -119,8 +115,8 @@
         /* Middle Slideshow Area Layout */
         .slideshow-wrapper {
             position: absolute;
-            top: 22vh; 
-            bottom: 22vh; 
+            top: 28vh; 
+            bottom: 24vh; 
             left: 0;
             right: 0;
             display: flex;
@@ -130,12 +126,12 @@
             z-index: 6;
         }
 
-        /* Dynamic Frameless Photo Container - Restored to original layout */
+        /* Dynamic, Restricted Frameless Photo Container */
         #photo-frame {
             height: 100%; 
             width: 100%;
-            max-height: 420px; 
-            max-width: 600px;  
+            max-height: 220px; 
+            max-width: 320px; 
             position: relative;
             overflow: hidden;
             opacity: 0;
@@ -260,7 +256,7 @@
             background-color: #bdbdbd;
         }
 
-        /* Curtains Smooth Transition Setup */
+        /* Curtains */
         .curtain {
             position: fixed;
             top: 0;
@@ -269,7 +265,7 @@
             background: #b71c1c;
             background-image: repeating-linear-gradient(to right, #b71c1c, #b71c1c 40px, #9e1c1c 40px, #9e1c1c 80px);
             z-index: 20; 
-            transition: transform 2s ease-in-out;
+            transition: transform 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             box-shadow: 0 0 30px rgba(0,0,0,0.7);
         }
         #curtain-left {
@@ -282,9 +278,8 @@
             transform: translateX(105%); 
             border-radius: 15px 0 0 15px;
         }
-        
-        body.curtains-closed #curtain-left { transform: translateX(0); }
-        body.curtains-closed #curtain-right { transform: translateX(0); }
+        .curtains-closed #curtain-left { transform: translateX(0); }
+        .curtains-closed #curtain-right { transform: translateX(0); }
 
         @keyframes bounce {
             0%, 100% { transform: translateY(0); scale: 1; }
@@ -361,7 +356,6 @@
     <script>
         const colors = ['#ff1744', '#00e676', '#2979ff', '#ffea00', '#d500f9', '#ff9100'];
         let balloonInterval;
-        let slideshowTimeout1, slideshowTimeout2, prePlayTimeout; 
         let isMutedPeriod = true; 
         let slideshowStarted = false; 
         let currentImgIndex = 0;
@@ -371,10 +365,8 @@
         const greetingText = document.getElementById('greeting-text');
         const subtitleText = document.getElementById('subtitle-text');
         const stage = document.getElementById('stage');
-        const textContainer = document.getElementById('text-container');
         const giftScreen = document.getElementById('gift-screen');
         const balloonZone = document.getElementById('balloon-zone');
-        const creatorCredit = document.getElementById('creator-credit');
 
         const lyrics = [
             { time: 0.0,  text: "🎶 Music Starting... 🎶", sub: "Happy 5th Birthday!" },
@@ -390,6 +382,13 @@
             { time: 56.5, text: "✨ Happy 5th Birthday, Afif! ✨", sub: "" }
         ];
 
+        // Listen for the Enter key to launch the present screen
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && giftScreenActive) {
+                openPresent();
+            }
+        });
+
         function createBalloon() {
             const balloon = document.createElement('div');
             balloon.classList.add('balloon');
@@ -404,26 +403,24 @@
             const frame = document.getElementById('photo-frame');
             const images = frame.getElementsByTagName('img');
             
-            if (giftScreenActive) return;
-
             if (!slideshowStarted) {
                 slideshowStarted = true;
                 frame.classList.add('visible');
             }
 
-            for(let img of images) { img.classList.remove('active'); }
-
             images[currentImgIndex].classList.add('active');
 
-            slideshowTimeout1 = setTimeout(() => {
+            setTimeout(() => {
+                
                 if (currentImgIndex === images.length - 1) {
                     return; 
                 }
 
                 images[currentImgIndex].classList.remove('active');
 
-                slideshowTimeout2 = setTimeout(() => {
+                setTimeout(() => {
                     currentImgIndex++;
+                    
                     if (!track.paused && !track.ended) {
                         runSequentialSlideshow();
                     }
@@ -433,75 +430,46 @@
         }
 
         function openPresent() {
-            giftScreenActive = false; 
-            
+            giftScreenActive = false; // Disable keyboard shortcut once clicked
             warmup.play().then(() => { warmup.pause(); }).catch(e => console.log(e));
-            
-            track.pause();
-            track.currentTime = 0;
 
-            giftScreen.style.opacity = '0';
-
-            setTimeout(() => {
-                giftScreen.style.display = 'none';
-                stage.style.display = 'flex';
-                stage.style.opacity = '1';
-                creatorCredit.style.opacity = '1';
-                
-                startSilentBuildup();
-            }, 500);
-        }
-
-        function startSilentBuildup() {
             track.pause();
             track.currentTime = 0;
             isMutedPeriod = true;
 
-            greetingText.innerText = "Happy Birthday Afif!";
-            subtitleText.innerText = "Happy 5th Birthday!";
-            subtitleText.style.display = "block";
-            
-            document.body.style.backgroundColor = '#e0f7fa';
-            document.body.classList.remove('dark-mode');
-            document.getElementById('cake-container').classList.remove('show');
-            document.getElementById('photo-frame').classList.remove('visible');
-            
-            const images = document.getElementById('photo-frame').getElementsByTagName('img');
-            for(let img of images) { img.classList.remove('active'); }
+            giftScreen.style.opacity = '0';
+            document.getElementById('creator-credit').style.opacity = '1';
 
-            if(!balloonInterval) {
-                balloonInterval = setInterval(createBalloon, 250);
-            }
-
-            stage.style.display = 'flex';
-            textContainer.style.display = 'block';
-
-            prePlayTimeout = setTimeout(() => {
-                if (giftScreenActive) return; 
-                isMutedPeriod = false; 
+            setTimeout(() => {
+                giftScreen.style.display = 'none';
+                stage.style.display = 'flex';
                 
-                document.body.style.backgroundColor = '#1a1a2e'; 
-                document.body.classList.add('dark-mode');
-                document.getElementById('cake-container').classList.add('show'); 
+                greetingText.innerText = "Happy Birthday Afif!";
+                subtitleText.innerText = "Happy 5th Birthday!";
+                balloonInterval = setInterval(createBalloon, 250); 
                 
-                greetingText.innerText = "🎶 Music Starting... 🎶";
+                setTimeout(() => {
+                    isMutedPeriod = false; 
+                    
+                    document.body.style.backgroundColor = '#1a1a2e'; 
+                    document.body.classList.add('dark-mode');
+                    document.getElementById('cake-container').classList.add('show'); 
+                    
+                    greetingText.innerText = "🎶 Music Starting... 🎶";
+                    
+                    track.volume = 1.0;
+                    track.play().catch(error => {
+                        greetingText.innerText = "Tap screen to hear music! 🎵";
+                        document.body.addEventListener('click', () => { track.play(); }, { once: true });
+                    });
+                }, 3000); 
                 
-                track.volume = 1.0;
-                track.play().catch(error => {
-                    greetingText.innerText = "Tap screen to hear music! 🎵";
-                    const forcePlay = () => {
-                        track.volume = 1.0;
-                        track.play();
-                        document.body.removeEventListener('click', forcePlay);
-                    };
-                    document.body.addEventListener('click', forcePlay);
-                });
-            }, 3000); 
+            }, 500);
         }
 
         /* Precision Sync Engine */
         track.addEventListener('timeupdate', () => {
-            if (isMutedPeriod || giftScreenActive) return;
+            if (isMutedPeriod) return;
 
             const currentTime = track.currentTime;
             
@@ -526,33 +494,19 @@
             }
         });
 
-        /* TIMING CONTROL MATRIX FOR ALL SCREEN TYPES */
+        /* Curtains Close Exactly 2 Seconds After Track Complete */
         track.onended = () => {
-            if (giftScreenActive) return;
-
-            track.pause();
-            track.currentTime = 0;
-
-            stage.style.display = 'none';
-            textContainer.style.display = 'none';
-
-            document.body.classList.add('curtains-closed');
-
-            clearTimeout(slideshowTimeout1);
-            clearTimeout(slideshowTimeout2);
-            clearTimeout(prePlayTimeout);
-            slideshowStarted = false;
-            currentImgIndex = 0;
-
             setTimeout(() => {
-                if (giftScreenActive) return;
+                clearInterval(balloonInterval); 
+
+                const flames = document.querySelectorAll('.flame');
+                flames.forEach(flame => flame.style.opacity = '0');
                 
-                document.body.classList.remove('curtains-closed');
-                
-                setTimeout(() => {
-                    startSilentBuildup();
-                }, 150);
-            }, 4500); 
+                document.getElementById('photo-frame').classList.remove('visible'); 
+                document.getElementById('creator-credit').style.opacity = '0';
+                document.body.classList.add('curtains-closed');
+                stage.style.opacity = '0';
+            }, 2000); 
         };
     </script>
 </body>
