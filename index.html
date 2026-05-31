@@ -434,11 +434,10 @@
             giftScreenActive = false; 
             
             warmup.play().then(() => { warmup.pause(); }).catch(e => console.log(e));
-            track.volume = 0;
-            track.play().then(() => {
-                track.pause();
-                track.currentTime = 0;
-            }).catch(e => console.log(e));
+            
+            // Prime browser audio cleanly on click, but force total pause instantly
+            track.pause();
+            track.currentTime = 0;
 
             giftScreen.style.opacity = '0';
 
@@ -452,7 +451,9 @@
             }, 500);
         }
 
+        /* 3. STEP THREE: Complete silence buildup sequence */
         function startSilentBuildup() {
+            // Absolute hard-stop on audio and track pointer reset
             track.pause();
             track.currentTime = 0;
             isMutedPeriod = true;
@@ -473,10 +474,12 @@
                 balloonInterval = setInterval(createBalloon, 250);
             }
 
+            // Exactly 3 seconds of peaceful setup before dropping the beat
             prePlayTimeout = setTimeout(() => {
                 if (giftScreenActive) return; 
                 isMutedPeriod = false; 
                 
+                /* 4. STEP FOUR: Kick off the actual show elements */
                 document.body.style.backgroundColor = '#1a1a2e'; 
                 document.body.classList.add('dark-mode');
                 document.getElementById('cake-container').classList.add('show'); 
@@ -523,11 +526,15 @@
             }
         });
 
-        /* FOREVER LOOP TIMING FIXED */
+        /* FOREVER LOOP TIMING FIXED PROPERLY */
         track.onended = () => {
             if (giftScreenActive) return;
 
-            // 1. Curtains take 2 seconds to close shut completely
+            // Make sure music stops immediately when the file naturally ends
+            track.pause();
+            track.currentTime = 0;
+
+            // 1. STEP ONE: Physical curtains close shut completely (Takes 2 seconds)
             document.body.classList.add('curtains-closed');
 
             clearTimeout(slideshowTimeout1);
@@ -536,14 +543,14 @@
             slideshowStarted = false;
             currentImgIndex = 0;
 
-            // 2. Set total wait to 4000ms (2s animation closing + 2s holding shut)
+            // 4 seconds total (2s closing animation + 2s holding shut perfectly blank)
             setTimeout(() => {
                 if (giftScreenActive) return;
                 
-                // 3. Open curtains back up
+                // 2. STEP TWO: Curtains swing back wide open
                 document.body.classList.remove('curtains-closed');
                 
-                // 4. Start the silent build part
+                // Then immediately calls step 3 (buildup text and silent mode setup)
                 startSilentBuildup();
             }, 4000); 
         };
